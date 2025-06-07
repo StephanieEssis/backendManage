@@ -1,18 +1,17 @@
 const express = require('express');
+const router = express.Router();
 const roomController = require('../controllers/roomController');
 const auth = require('../middleware/auth');
 
-const router = express.Router();
+// Routes publiques
+router.get('/', roomController.getAllRooms);
+router.get('/:id', roomController.getRoomById);
+router.get('/category/:categoryId', roomController.getRoomsByCategory);
+router.get('/:id/availability', roomController.checkAvailability);
 
-// Public routes
-router.get('/rooms', roomController.getAllRooms);
-router.get('/rooms/:id', roomController.getRoomById);
-router.get('/rooms/category/:categoryId', roomController.getRoomsByCategory);
-router.get('/rooms/:id/availability', roomController.checkAvailability);
-
-// Protected routes (admin only)
-router.post('/rooms', auth, roomController.createRoom);
-router.put('/rooms/:id', auth, roomController.updateRoom);
-router.delete('/rooms/:id', auth, roomController.deleteRoom);
+// Routes protégées (admin only)
+router.post('/', auth, roomController.createRoom);
+router.put('/:id', auth, roomController.updateRoom);
+router.delete('/:id', auth, roomController.deleteRoom);
 
 module.exports = router;
