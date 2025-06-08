@@ -17,7 +17,7 @@ const roomController = {
     try {
       const room = await Room.findById(req.params.id).populate('category');
       if (!room) {
-        return res.status(404).json({ message: 'Chambre non trouvée' });
+        return res.status(404).json({ message: 'Room not found' });
       }
       res.status(200).json(room);
     } catch (error) {
@@ -42,35 +42,22 @@ const roomController = {
       const room = await Room.findById(req.params.id);
 
       if (!room) {
-        return res.status(404).json({
-          success: false,
-          message: 'Room not found'
-        });
+        return res.status(404).json({ message: 'Room not found' });
       }
 
       if (!startDate || !endDate) {
-        return res.status(400).json({
-          success: false,
-          message: 'Please provide both start and end dates'
-        });
+        return res.status(400).json({ message: 'Please provide both start and end dates' });
       }
 
       // TODO: Implement actual availability check logic
       // For now, we'll just return the room's current availability status
       res.json({
-        success: true,
-        data: {
-          isAvailable: room.isAvailable,
-          room
-        }
+        isAvailable: room.isAvailable,
+        room
       });
     } catch (error) {
       console.error('Check availability error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to check room availability',
-        error: error.message
-      });
+      res.status(500).json({ message: error.message });
     }
   },
 
@@ -96,7 +83,7 @@ const roomController = {
       ).populate('category');
       
       if (!room) {
-        return res.status(404).json({ message: 'Chambre non trouvée' });
+        return res.status(404).json({ message: 'Room not found' });
       }
       res.status(200).json(room);
     } catch (error) {
@@ -109,9 +96,9 @@ const roomController = {
     try {
       const room = await Room.findByIdAndDelete(req.params.id);
       if (!room) {
-        return res.status(404).json({ message: 'Chambre non trouvée' });
+        return res.status(404).json({ message: 'Room not found' });
       }
-      res.status(200).json({ message: 'Chambre supprimée avec succès' });
+      res.status(200).json({ message: 'Room deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

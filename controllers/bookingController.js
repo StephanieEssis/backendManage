@@ -13,24 +13,18 @@ const bookingController = {
         specialRequests
       } = req.body;
 
-      // Validation des données
+      // Validate required fields
       if (!roomId || !checkIn || !checkOut || !guests) {
-        return res.status(400).json({
-          success: false,
-          message: 'Please provide all required fields'
-        });
+        return res.status(400).json({ message: 'Please provide all required fields' });
       }
 
-      // Vérifier si la chambre existe
+      // Check if room exists
       const room = await Room.findById(roomId);
       if (!room) {
-        return res.status(404).json({
-          success: false,
-          message: 'Room not found'
-        });
+        return res.status(404).json({ message: 'Room not found' });
       }
 
-      // Vérifier si la chambre est disponible pour ces dates
+      // Check if room is available for these dates
       const existingBooking = await Booking.findOne({
         room: roomId,
         status: { $ne: 'cancelled' },
@@ -43,17 +37,14 @@ const bookingController = {
       });
 
       if (existingBooking) {
-        return res.status(400).json({
-          success: false,
-          message: 'Room is not available for these dates'
-        });
+        return res.status(400).json({ message: 'Room is not available for these dates' });
       }
 
-      // Calculer le prix total
+      // Calculate total price
       const nights = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
       const totalPrice = room.price * nights;
 
-      // Créer la réservation
+      // Create booking
       const booking = new Booking({
         user: req.user._id,
         room: roomId,
@@ -66,23 +57,17 @@ const bookingController = {
 
       await booking.save();
 
-      // Récupérer la réservation avec les détails
+      // Get booking with details
       const populatedBooking = await Booking.findById(booking._id)
         .populate('room')
         .populate('user', 'fullName email');
 
       res.status(201).json({
-        success: true,
         message: 'Booking created successfully',
-        data: { booking: populatedBooking }
+        booking: populatedBooking
       });
     } catch (error) {
-      console.error('Create booking error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to create booking',
-        error: error.message
-      });
+      res.status(500).json({ message: error.message });
     }
   },
 
@@ -94,19 +79,11 @@ const bookingController = {
         .sort({ createdAt: -1 });
 
       res.json({
-        success: true,
-        data: {
-          bookings,
-          count: bookings.length
-        }
+        bookings,
+        count: bookings.length
       });
     } catch (error) {
-      console.error('Get user bookings error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to fetch bookings',
-        error: error.message
-      });
+      res.status(500).json({ message: error.message });
     }
   },
 
@@ -118,31 +95,17 @@ const bookingController = {
         .populate('user', 'fullName email');
 
       if (!booking) {
-        return res.status(404).json({
-          success: false,
-          message: 'Booking not found'
-        });
+        return res.status(404).json({ message: 'Booking not found' });
       }
 
-      // Vérifier si l'utilisateur est autorisé à voir cette réservation
+      // Check if user is authorized to view this booking
       if (booking.user._id.toString() !== req.user._id.toString()) {
-        return res.status(403).json({
-          success: false,
-          message: 'Not authorized to view this booking'
-        });
+        return res.status(403).json({ message: 'Not authorized to view this booking' });
       }
 
-      res.json({
-        success: true,
-        data: { booking }
-      });
+      res.json({ booking });
     } catch (error) {
-      console.error('Get booking by ID error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to fetch booking',
-        error: error.message
-      });
+      res.status(500).json({ message: error.message });
     }
   },
 
@@ -152,43 +115,28 @@ const bookingController = {
       const booking = await Booking.findById(req.params.id);
 
       if (!booking) {
-        return res.status(404).json({
-          success: false,
-          message: 'Booking not found'
-        });
+        return res.status(404).json({ message: 'Booking not found' });
       }
 
-      // Vérifier si l'utilisateur est autorisé à annuler cette réservation
+      // Check if user is authorized to cancel this booking
       if (booking.user.toString() !== req.user._id.toString()) {
-        return res.status(403).json({
-          success: false,
-          message: 'Not authorized to cancel this booking'
-        });
+        return res.status(403).json({ message: 'Not authorized to cancel this booking' });
       }
 
-      // Vérifier si la réservation peut être annulée
+      // Check if booking can be cancelled
       if (booking.status === 'cancelled') {
-        return res.status(400).json({
-          success: false,
-          message: 'Booking is already cancelled'
-        });
+        return res.status(400).json({ message: 'Booking is already cancelled' });
       }
 
       booking.status = 'cancelled';
       await booking.save();
 
       res.json({
-        success: true,
         message: 'Booking cancelled successfully',
-        data: { booking }
+        booking
       });
     } catch (error) {
-      console.error('Cancel booking error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to cancel booking',
-        error: error.message
-      });
+      res.status(500).json({ message: error.message });
     }
   },
 
@@ -198,7 +146,7 @@ const bookingController = {
       const { status, startDate, endDate } = req.query;
       let filter = {};
 
-      // Filtres
+      // Apply filters
       if (status) {
         filter.status = status;
       }
@@ -215,19 +163,11 @@ const bookingController = {
         .sort({ createdAt: -1 });
 
       res.json({
-        success: true,
-        data: {
-          bookings,
-          count: bookings.length
-        }
+        bookings,
+        count: bookings.length
       });
     } catch (error) {
-      console.error('Get all bookings error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to fetch bookings',
-        error: error.message
-      });
+      res.status(500).json({ message: error.message });
     }
   },
 
@@ -237,39 +177,23 @@ const bookingController = {
       const { status } = req.body;
 
       if (!status || !['pending', 'confirmed', 'cancelled'].includes(status)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid status'
-        });
+        return res.status(400).json({ message: 'Invalid status' });
       }
 
       const booking = await Booking.findById(req.params.id);
       if (!booking) {
-        return res.status(404).json({
-          success: false,
-          message: 'Booking not found'
-        });
+        return res.status(404).json({ message: 'Booking not found' });
       }
 
       booking.status = status;
       await booking.save();
 
-      const updatedBooking = await Booking.findById(booking._id)
-        .populate('room')
-        .populate('user', 'fullName email');
-
       res.json({
-        success: true,
         message: 'Booking status updated successfully',
-        data: { booking: updatedBooking }
+        booking
       });
     } catch (error) {
-      console.error('Update booking status error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to update booking status',
-        error: error.message
-      });
+      res.status(500).json({ message: error.message });
     }
   }
 };

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const roomController = require('../controllers/roomController');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // Routes publiques
 router.get('/', roomController.getAllRooms);

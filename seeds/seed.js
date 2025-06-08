@@ -6,12 +6,17 @@ const seedRooms = require('./roomSeed');
 
 const runSeeds = async () => {
   try {
+    console.log('Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB successfully');
 
-    // Exécuter les seeds dans l'ordre
-    await seedCategories();
-    await seedRooms();
+    console.log('Starting to seed categories...');
+    const categories = await seedCategories();
+    console.log('Categories seeded:', categories);
+
+    console.log('Starting to seed rooms...');
+    const rooms = await seedRooms();
+    console.log('Rooms seeded:', rooms);
 
     console.log('All seeds completed successfully');
     process.exit(0);

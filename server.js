@@ -39,7 +39,28 @@ app.use('/api', authRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  
+  // Gestion spécifique des erreurs d'authentification
+  if (err.name === 'UnauthorizedError') {
+    return res.status(401).json({ 
+      success: false,
+      message: 'Token invalide ou expiré' 
+    });
+  }
+  
+  // Gestion des erreurs de validation
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ 
+      success: false,
+      message: err.message 
+    });
+  }
+  
+  // Erreur par défaut
+  res.status(500).json({ 
+    success: false,
+    message: 'Une erreur est survenue sur le serveur' 
+  });
 });
 
 app.listen(PORT, () => {
