@@ -9,7 +9,6 @@ const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const roomRoutes = require('./routes/roomRoutes');
-const reservationRoutes = require('./routes/reservationRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 
 //DB
@@ -22,7 +21,7 @@ const PORT = process.env.PORT || 5000;
 
 // Configuration CORS
 const corsOptions = {
-  origin: ['http://localhost:5173', 'https://your-frontend-domain.com'],
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -41,7 +40,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/rooms', roomRoutes);
-app.use('/api/reservations', reservationRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', authRoutes);
 

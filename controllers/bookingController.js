@@ -19,30 +19,25 @@ const bookingController = {
       }
 
       // Check if room exists
-      const room = await Room.findById(roomId);
+      const room = await Room.findById(roomId).populate('category');
       if (!room) {
         return res.status(404).json({ message: 'Room not found' });
       }
 
-      // Check if room is available for these dates
-      const existingBooking = await Booking.findOne({
-        room: roomId,
-        status: { $ne: 'cancelled' },
-        $or: [
-          {
-            checkIn: { $lte: checkOut },
-            checkOut: { $gte: checkIn }
-          }
-        ]
-      });
+      // Check if room is available
+      if (!room.isAvailable) {
+        return res.status(400).json({ message: 'Room is not available' });
+      }
 
-      if (existingBooking) {
+      // Check if room is available for these dates
+      const isAvailable = await Booking.isRoomAvailable(roomId, checkIn, checkOut);
+      if (!isAvailable) {
         return res.status(400).json({ message: 'Room is not available for these dates' });
       }
 
       // Calculate total price
       const nights = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
-      const totalPrice = room.price * nights;
+      const totalPrice = room.category.pricePerNight * nights;
 
       // Create booking
       const booking = new Booking({
@@ -75,7 +70,13 @@ const bookingController = {
   getUserBookings: async (req, res) => {
     try {
       const bookings = await Booking.find({ user: req.user._id })
-        .populate('room')
+        .populate({
+          path: 'room',
+          populate: {
+            path: 'category',
+            model: 'Category'
+          }
+        })
         .sort({ createdAt: -1 });
 
       res.json({
@@ -91,7 +92,13 @@ const bookingController = {
   getBookingById: async (req, res) => {
     try {
       const booking = await Booking.findById(req.params.id)
-        .populate('room')
+        .populate({
+          path: 'room',
+          populate: {
+            path: 'category',
+            model: 'Category'
+          }
+        })
         .populate('user', 'fullName email');
 
       if (!booking) {
@@ -99,7 +106,7 @@ const bookingController = {
       }
 
       // Check if user is authorized to view this booking
-      if (booking.user._id.toString() !== req.user._id.toString()) {
+      if (booking.user._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
         return res.status(403).json({ message: 'Not authorized to view this booking' });
       }
 
@@ -119,7 +126,7 @@ const bookingController = {
       }
 
       // Check if user is authorized to cancel this booking
-      if (booking.user.toString() !== req.user._id.toString()) {
+      if (booking.user.toString() !== req.user._id.toString() && !req.user.isAdmin) {
         return res.status(403).json({ message: 'Not authorized to cancel this booking' });
       }
 
@@ -158,7 +165,13 @@ const bookingController = {
       }
 
       const bookings = await Booking.find(filter)
-        .populate('room')
+        .populate({
+          path: 'room',
+          populate: {
+            path: 'category',
+            model: 'Category'
+          }
+        })
         .populate('user', 'fullName email')
         .sort({ createdAt: -1 });
 
@@ -176,7 +189,7 @@ const bookingController = {
     try {
       const { status } = req.body;
 
-      if (!status || !['pending', 'confirmed', 'cancelled'].includes(status)) {
+      if (!status || !['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
         return res.status(400).json({ message: 'Invalid status' });
       }
 

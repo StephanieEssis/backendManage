@@ -4,7 +4,7 @@ const { auth, isAdmin } = require('../middleware/auth');
 const Room = require('../models/Room');
 
 // Routes publiques
-router.get('/rooms', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const rooms = await Room.find({ isAvailable: true });
     res.json(rooms);
@@ -13,7 +13,7 @@ router.get('/rooms', async (req, res) => {
   }
 });
 
-router.get('/rooms/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const room = await Room.findById(req.params.id);
     if (!room) {
@@ -26,7 +26,7 @@ router.get('/rooms/:id', async (req, res) => {
 });
 
 // Routes protégées (admin uniquement)
-router.post('/rooms', auth, isAdmin, async (req, res) => {
+router.post('/', auth, isAdmin, async (req, res) => {
   try {
     const room = new Room(req.body);
     await room.save();
@@ -36,7 +36,7 @@ router.post('/rooms', auth, isAdmin, async (req, res) => {
   }
 });
 
-router.put('/rooms/:id', auth, isAdmin, async (req, res) => {
+router.put('/:id', auth, isAdmin, async (req, res) => {
   try {
     const room = await Room.findByIdAndUpdate(
       req.params.id,
@@ -52,7 +52,7 @@ router.put('/rooms/:id', auth, isAdmin, async (req, res) => {
   }
 });
 
-router.delete('/rooms/:id', auth, isAdmin, async (req, res) => {
+router.delete('/:id', auth, isAdmin, async (req, res) => {
   try {
     const room = await Room.findByIdAndDelete(req.params.id);
     if (!room) {
@@ -65,7 +65,7 @@ router.delete('/rooms/:id', auth, isAdmin, async (req, res) => {
 });
 
 // Route pour obtenir toutes les chambres (admin uniquement)
-router.get('/admin/rooms', auth, isAdmin, async (req, res) => {
+router.get('/admin/all', auth, isAdmin, async (req, res) => {
   try {
     const rooms = await Room.find();
     res.json(rooms);

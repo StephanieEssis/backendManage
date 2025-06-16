@@ -2,7 +2,7 @@ const Admin = require('../models/Admin');
 const User = require('../models/User');
 const Room = require('../models/Room');
 const Category = require('../models/Category');
-const Reservation = require('../models/Reservation');
+const Booking = require('../models/Booking');
 const jwt = require('jsonwebtoken');
 
 const adminController = {
@@ -50,12 +50,12 @@ const adminController = {
       const availableRooms = await Room.countDocuments({ isAvailable: true });
       const totalUsers = await User.countDocuments();
       
-      // Reservations by category
-      const reservationsByCategory = await Reservation.aggregate([
+      // Bookings by category
+      const bookingsByCategory = await Booking.aggregate([
         {
           $lookup: {
             from: 'rooms',
-            localField: 'roomId',
+            localField: 'room',
             foreignField: '_id',
             as: 'room'
           }
@@ -78,24 +78,36 @@ const adminController = {
         }
       ]);
 
+      // Get booking statistics
+      const totalBookings = await Booking.countDocuments();
+      const pendingBookings = await Booking.countDocuments({ status: 'pending' });
+      const confirmedBookings = await Booking.countDocuments({ status: 'confirmed' });
+      const cancelledBookings = await Booking.countDocuments({ status: 'cancelled' });
+      const completedBookings = await Booking.countDocuments({ status: 'completed' });
+
       res.json({
         totalRooms,
         availableRooms,
         totalUsers,
-        reservationsByCategory
+        totalBookings,
+        pendingBookings,
+        confirmedBookings,
+        cancelledBookings,
+        completedBookings,
+        bookingsByCategory
       });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   },
 
-  // Get all reservations
-  getAllReservations: async (req, res) => {
+  // Get all bookings
+  getAllBookings: async (req, res) => {
     try {
-      const reservations = await Reservation.find()
-        .populate('userId', 'fullName email phone')
+      const bookings = await Booking.find()
+        .populate('user', 'fullName email phone')
         .populate({
-          path: 'roomId',
+          path: 'room',
           populate: {
             path: 'categoryId',
             model: 'Category'
@@ -103,7 +115,7 @@ const adminController = {
         })
         .sort({ createdAt: -1 });
 
-      res.json(reservations);
+      res.json(bookings);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
