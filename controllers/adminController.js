@@ -119,6 +119,42 @@ const adminController = {
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
+  },
+
+  // Get all users
+  getAllUsers: async (req, res) => {
+    try {
+      const users = await User.find()
+        .select('fullName email phone role createdAt')
+        .sort({ createdAt: -1 });
+
+      res.json({ users });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  // Delete user
+  deleteUser: async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Vérifier que l'utilisateur existe
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      }
+
+      // Empêcher la suppression d'un admin
+      if (user.role === 'admin') {
+        return res.status(403).json({ message: 'Impossible de supprimer un administrateur' });
+      }
+
+      await User.findByIdAndDelete(id);
+      res.json({ message: 'Utilisateur supprimé avec succès' });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
   }
 };
 

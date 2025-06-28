@@ -15,8 +15,22 @@ const auth = async (req, res, next) => {
     // Vérifier le token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Trouver l'utilisateur
-    const user = await User.findOne({ _id: decoded.userId });
+    // Essayer de trouver un utilisateur normal
+    let user = await User.findOne({ _id: decoded.userId });
+    
+    // Si pas d'utilisateur normal, essayer de trouver un admin
+    if (!user && decoded.adminId) {
+      const admin = await Admin.findOne({ _id: decoded.adminId });
+      if (admin) {
+        // Créer un objet user compatible avec le rôle admin
+        user = {
+          _id: admin._id,
+          role: 'admin',
+          username: admin.username
+        };
+      }
+    }
+    
     if (!user) {
       return res.status(401).json({ message: 'Utilisateur non trouvé' });
     }
