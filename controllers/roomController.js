@@ -5,7 +5,7 @@ const roomController = {
   // Get all rooms
   getAllRooms: async (req, res) => {
     try {
-      const rooms = await Room.find().populate('category');
+      const rooms = await Room.find();
       res.status(200).json(rooms);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -15,7 +15,7 @@ const roomController = {
   // Get room by ID
   getRoomById: async (req, res) => {
     try {
-      const room = await Room.findById(req.params.id).populate('category');
+      const room = await Room.findById(req.params.id);
       if (!room) {
         return res.status(404).json({ message: 'Room not found' });
       }
@@ -28,7 +28,7 @@ const roomController = {
   // Get rooms by category
   getRoomsByCategory: async (req, res) => {
     try {
-      const rooms = await Room.find({ category: req.params.categoryId }).populate('category');
+      const rooms = await Room.find({ category: req.params.categoryId });
       res.status(200).json(rooms);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -66,8 +66,7 @@ const roomController = {
     try {
       const room = new Room(req.body);
       const savedRoom = await room.save();
-      const populatedRoom = await Room.findById(savedRoom._id).populate('category');
-      res.status(201).json(populatedRoom);
+      res.status(201).json(savedRoom);
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
@@ -80,7 +79,7 @@ const roomController = {
         req.params.id,
         req.body,
         { new: true, runValidators: true }
-      ).populate('category');
+      );
       
       if (!room) {
         return res.status(404).json({ message: 'Room not found' });

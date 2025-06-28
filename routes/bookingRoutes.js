@@ -10,7 +10,7 @@ router.get('/:id', auth, bookingController.getBookingById);
 router.put('/:id/cancel', auth, bookingController.cancelBooking);
 
 // Routes pour l'admin
-router.get('/admin/all', auth, isAdmin, bookingController.getAllBookings);
-router.put('/admin/:id/status', auth, isAdmin, bookingController.updateBookingStatus);
+router.get('/admin/bookings', auth, isAdmin, bookingController.getAllBookings);
+router.put('/admin/bookings/:id/status', auth, isAdmin, bookingController.updateBookingStatus);
 
 module.exports = router; 

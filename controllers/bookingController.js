@@ -5,6 +5,10 @@ const bookingController = {
   // Create a new booking
   createBooking: async (req, res) => {
     try {
+      console.log('=== CREATE BOOKING START ===');
+      console.log('Request body:', req.body);
+      console.log('User:', req.user);
+      
       const {
         roomId,
         checkIn,
@@ -15,32 +19,49 @@ const bookingController = {
 
       // Validate required fields
       if (!roomId || !checkIn || !checkOut || !guests) {
+        console.log('Missing required fields:', { roomId, checkIn, checkOut, guests });
         return res.status(400).json({ message: 'Please provide all required fields' });
       }
 
+      console.log('Looking for room with ID:', roomId);
       // Check if room exists
-      const room = await Room.findById(roomId).populate('category');
+      const room = await Room.findById(roomId);
+      console.log('Room found:', room);
+      
       if (!room) {
+        console.log('Room not found');
         return res.status(404).json({ message: 'Room not found' });
       }
 
       // Check if room is available
       if (!room.isAvailable) {
+        console.log('Room not available');
         return res.status(400).json({ message: 'Room is not available' });
       }
 
+      // Check if room has a valid price
+      if (!room.price || room.price <= 0) {
+        console.log('Invalid room price:', room.price);
+        return res.status(500).json({ message: 'Server error: Cannot calculate room price due to missing data.' });
+      }
+
+      console.log('Checking room availability for dates:', { checkIn, checkOut });
       // Check if room is available for these dates
       const isAvailable = await Booking.isRoomAvailable(roomId, checkIn, checkOut);
+      console.log('Room availability result:', isAvailable);
+      
       if (!isAvailable) {
+        console.log('Room not available for these dates');
         return res.status(400).json({ message: 'Room is not available for these dates' });
       }
 
       // Calculate total price
       const nights = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
-      const totalPrice = room.category.pricePerNight * nights;
+      const totalPrice = room.price * nights;
+      console.log('Price calculation:', { nights, roomPrice: room.price, totalPrice });
 
       // Create booking
-      const booking = new Booking({
+      const bookingData = {
         user: req.user._id,
         room: roomId,
         checkIn,
@@ -48,21 +69,30 @@ const bookingController = {
         totalPrice,
         guests,
         specialRequests: specialRequests || ''
-      });
-
+      };
+      
+      console.log('Creating booking with data:', bookingData);
+      const booking = new Booking(bookingData);
       await booking.save();
+      console.log('Booking saved successfully with ID:', booking._id);
 
       // Get booking with details
       const populatedBooking = await Booking.findById(booking._id)
         .populate('room')
         .populate('user', 'fullName email');
 
+      console.log('Populated booking:', populatedBooking);
+      console.log('=== CREATE BOOKING SUCCESS ===');
+
       res.status(201).json({
         message: 'Booking created successfully',
         booking: populatedBooking
       });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('=== CREATE BOOKING ERROR ===');
+      console.error('Error creating booking:', error);
+      console.error('Error stack:', error.stack);
+      res.status(500).json({ message: `Server error: ${error.message}` });
     }
   },
 
@@ -70,13 +100,7 @@ const bookingController = {
   getUserBookings: async (req, res) => {
     try {
       const bookings = await Booking.find({ user: req.user._id })
-        .populate({
-          path: 'room',
-          populate: {
-            path: 'category',
-            model: 'Category'
-          }
-        })
+        .populate('room')
         .sort({ createdAt: -1 });
 
       res.json({
@@ -92,13 +116,7 @@ const bookingController = {
   getBookingById: async (req, res) => {
     try {
       const booking = await Booking.findById(req.params.id)
-        .populate({
-          path: 'room',
-          populate: {
-            path: 'category',
-            model: 'Category'
-          }
-        })
+        .populate('room')
         .populate('user', 'fullName email');
 
       if (!booking) {
@@ -165,13 +183,7 @@ const bookingController = {
       }
 
       const bookings = await Booking.find(filter)
-        .populate({
-          path: 'room',
-          populate: {
-            path: 'category',
-            model: 'Category'
-          }
-        })
+        .populate('room')
         .populate('user', 'fullName email')
         .sort({ createdAt: -1 });
 

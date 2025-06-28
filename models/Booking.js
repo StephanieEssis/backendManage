@@ -24,9 +24,16 @@ const bookingSchema = new mongoose.Schema({
     required: true
   },
   guests: {
-    type: Number,
-    required: true,
-    min: 1
+    adults: {
+      type: Number,
+      required: true,
+      min: 1
+    },
+    children: {
+      type: Number,
+      default: 0,
+      min: 0
+    }
   },
   specialRequests: {
     type: String,

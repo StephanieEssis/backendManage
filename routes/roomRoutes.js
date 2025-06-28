@@ -9,7 +9,8 @@ router.get('/', async (req, res) => {
     const rooms = await Room.find({ isAvailable: true });
     res.json(rooms);
   } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur' });
+    console.error('Error fetching rooms:', error);
+    res.status(500).json({ message: 'Erreur serveur lors de la récupération des chambres', error: error.message });
   }
 });
 
@@ -21,7 +22,8 @@ router.get('/:id', async (req, res) => {
     }
     res.json(room);
   } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur' });
+    console.error('Error fetching room by ID:', error);
+    res.status(500).json({ message: 'Erreur serveur lors de la récupération de la chambre', error: error.message });
   }
 });
 
